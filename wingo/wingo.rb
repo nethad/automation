@@ -12,7 +12,7 @@ require "byebug"
 @wingo_password = ENV.fetch("WINGO_PASSWORD")
 
 Mail.defaults do
-  delivery_method :smtp, address: @smtp_address, port: 465, tls: true, user_name: @smtp_user, password: @smtp_password
+  delivery_method :smtp, { address: ENV.fetch("SMTP_ADDRESS"), port: 465, tls: true, user_name: ENV.fetch("SMTP_USER"), password: ENV.fetch("SMTP_PASSWORD") }
 end
 
 def log(message)
@@ -21,8 +21,8 @@ end
 
 def send_mail(pdf_content, period, price)
   mail = Mail.new do
-    from @smtp_user
-    to @moco_mail_address
+    from ENV.fetch("SMTP_USER")
+    to ENV.fetch("MOCO_MAIL_ADDRESS")
     subject "Mobilfunk Wingo: #{period}"
     body "CHF #{price}"
     add_file filename: "invoice.pdf", content: pdf_content
