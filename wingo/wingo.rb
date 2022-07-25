@@ -15,17 +15,6 @@ def log(message)
   puts "[INFO] [#{Time.now.iso8601}] #{message}"
 end
 
-def send_mail(pdf_content, period, price)
-  mail = Mail.new do
-    from ENV.fetch("SMTP_USER")
-    to ENV.fetch("MOCO_MAIL_ADDRESS")
-    subject "Mobilfunk Wingo: #{period}"
-    body "CHF #{price}"
-    add_file filename: "invoice.pdf", content: pdf_content
-  end
-  mail.deliver
-end
-
 m = Mechanize.new { |agent|
   agent.user_agent_alias = "Linux Firefox"
 }
