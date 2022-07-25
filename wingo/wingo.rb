@@ -1,19 +1,15 @@
 require "dotenv/load"
 require "mechanize"
-require "mail"
 require "time"
 require "byebug"
+require "base64"
+require "faraday"
+require "faraday/net_http"
+Faraday.default_adapter = :net_http
 
-@smtp_address = ENV.fetch("SMTP_ADDRESS")
-@smtp_user = ENV.fetch("SMTP_USER")
-@smtp_password = ENV.fetch("SMTP_PASSWORD")
-@moco_mail_address = ENV.fetch("MOCO_MAIL_ADDRESS")
 @wingo_user = ENV.fetch("WINGO_USER")
 @wingo_password = ENV.fetch("WINGO_PASSWORD")
-
-Mail.defaults do
-  delivery_method :smtp, { address: ENV.fetch("SMTP_ADDRESS"), port: 465, tls: true, user_name: ENV.fetch("SMTP_USER"), password: ENV.fetch("SMTP_PASSWORD") }
-end
+@moco_api_key = ENV.fetch("MOCO_API_KEY")
 
 def log(message)
   puts "[INFO] [#{Time.now.iso8601}] #{message}"
@@ -59,8 +55,25 @@ log("Loading first invoice PDF")
 
 pdf = m.get("/de/ajax_open_invoice?id=#{id}")
 
-log("Sending email")
+log("Posting receipt...")
 
-sent_mail = send_mail(pdf.body, period, price)
+payload = {
+  date: Date.today.to_s,
+  title: "Mobilfunk Wingo: #{period}",
+  items: [
+    {
+      vat_code_id: 186,
+      gross_total: Float(price),
+    },
+  ],
+  attachment: {
+    filename: "wingo_invoice.pdf",
+    base64: Base64.encode64(pdf.body),
+  },
+}
 
-log("Message sent, id=#{sent_mail.message_id}")
+response = Faraday.post("https://intern.mocoapp.com/api/v1/receipts", payload.to_json, {
+  "Content-Type" => "application/json",
+  "Authorization" => "Token token=#{@moco_api_key}",
+})
+log("Request sent, status: #{response.status}")
