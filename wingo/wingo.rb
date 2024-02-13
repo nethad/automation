@@ -1,6 +1,7 @@
 require "dotenv/load"
 require "mechanize"
 require "time"
+require "date"
 require "byebug"
 require "base64"
 require "faraday"
@@ -16,12 +17,12 @@ def log(message)
 end
 
 m = Mechanize.new { |agent|
-  agent.user_agent_alias = "Linux Firefox"
+  agent.user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
 }
 
 log("Opening mywingo.wingo.ch")
 
-page = m.get("https://mywingo.wingo.ch")
+page = m.get("https://mywingo.wingo.ch/eCare/de/users/sign_in")
 
 log("Filling in form")
 
@@ -46,12 +47,15 @@ pdf = m.get("/de/ajax_open_invoice?id=#{id}")
 
 log("Posting receipt...")
 
+prev = Date.today.prev_month
+last_month_end_of_month = Date.civil(prev.year, prev.month, -1)
+
 payload = {
-  date: Date.today.to_s,
-  title: "Mobilfunk Wingo: #{period}",
+  date: last_month_end_of_month.to_s,
+  title: "Mobilfunk Wingo: #{period} TEST",
   items: [
     {
-      vat_code_id: 186,
+      vat_code_id: 325,
       gross_total: Float(price),
     },
   ],
